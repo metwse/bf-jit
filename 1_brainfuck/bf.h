@@ -6,8 +6,10 @@
 #include <stdint.h>
 
 
-#define BF_PAGE_SIZE 1024LL * 1024LL * 1024LL * 2LL
+#define INITIAL_CAP 128
 
+#define BF_MAX_BRACKET 128
+#define BF_PAGE_SIZE 1024LL * 1024LL * 1024LL * 2LL
 
 enum op_kind {
 	OP_INC,
@@ -16,10 +18,13 @@ enum op_kind {
 	OP_MOVE_RIGHT,
 	OP_INPUT,
 	OP_OUTPUT,
+	OP_SZ,
+	OP_SNZ,
 };
 
 union op_data {
 	uint32_t count;
+	size_t bracket_pair;
 };
 
 struct op {

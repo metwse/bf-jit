@@ -4,6 +4,5 @@
 *.gcda
 *.gcno
 compile_commands.json
-rdesc
 bj-jit
 tests

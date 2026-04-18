@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <sys/mman.h>
 
@@ -16,9 +17,8 @@ int main(void)
 	char buf[4096];
 	buf[0] = '\0';
 
-	while (fgets(buf, 4096, stdin)) {
+	while (fgets(buf, 4096, stdin))
 		program_parse(&p, buf);
-	}
 
 	void *mem = calloc(1, 1024 * 1024 * 4);
 
@@ -27,7 +27,11 @@ int main(void)
 	jit(mem);
 
 	free(mem);
-	munmap(jit, BF_PAGE_SIZE);
+
+	void *jit_;
+
+	memcpy(&jit_, &jit, sizeof(void *));
+	munmap(jit_, BF_PAGE_SIZE);
 
 	return EXIT_SUCCESS;
 }

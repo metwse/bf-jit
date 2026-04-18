@@ -13,7 +13,7 @@ EXTRAFLAGS_debug = -O0 -g3
 EXTRAFLAGS_release = -O2 -Werror
 EXTRAFLAGS_test = --coverage -O0 -g3
 
-CFLAGS = -std=c11 -Wall -Wextra -MMD -MP $(EXTRAFLAGS_$(MODE))
+CFLAGS = -std=c11 -Wall -Wextra -pedantic -MMD -MP $(EXTRAFLAGS_$(MODE))
 
 
 default: bf-jit

@@ -6,13 +6,13 @@
 #include <stdlib.h>
 
 
-#define INITIAL_CAP 128
-
-
 void program_parse(struct program *p, const char *text) {
 	size_t i = 0;
 	uint32_t count = 0;
 	char c;
+
+	size_t bracket_stack[BF_MAX_BRACKET];
+	size_t bracket_stack_len = 0;
 
 	char prev_char = '\0';
 	while (true) {
@@ -33,15 +33,15 @@ void program_parse(struct program *p, const char *text) {
 				break;
 
 			case ',':
-				program_push_op(p,
-					(struct op) { .kind = OP_INPUT,
-						      .data.count = count });
+				while (count--)
+					program_push_op(p,
+						(struct op) { .kind = OP_INPUT });
 				break;
 
 			case '.':
-				program_push_op(p,
-					(struct op) { .kind = OP_OUTPUT,
-						      .data.count = count });
+				while (count--)
+					program_push_op(p,
+						(struct op) { .kind = OP_OUTPUT });
 				break;
 
 			case '<':
@@ -56,7 +56,26 @@ void program_parse(struct program *p, const char *text) {
 						      .data.count = count });
 				break;
 
-			default:
+			case '[':
+				bracket_stack[bracket_stack_len++] = p->len;
+
+				program_push_op(p,
+					(struct op) { .kind = OP_SZ });
+
+				break;
+
+			case ']': {
+				size_t pair = bracket_stack[--bracket_stack_len];
+
+				p->program[pair].data.bracket_pair = p->len;
+
+				program_push_op(p,
+					(struct op) { .kind = OP_SNZ,
+						      .data.bracket_pair = pair });
+
+				break;
+
+			} default:
 				break;
 			}
 

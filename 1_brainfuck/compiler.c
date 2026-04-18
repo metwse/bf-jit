@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stddef.h>
 
+#include <string.h>
 #include <sys/mman.h>
 
 
@@ -13,11 +14,23 @@
 	for (size_t __j = 0; str[__j]; __j++) \
 		p(str[__j]);
 
+#define pn(str, n) \
+	for (size_t __j = 0; __j < n; __j++) \
+		p(str[__j]);
+
 #define p_u32(u32) \
 	p((u32 >> 0) & 255); \
 	p((u32 >> 8) & 255); \
 	p((u32 >> 16) & 255); \
 	p((u32 >> 24) & 255);
+
+#define p_u64(u64) \
+	p_u32(u64); \
+	p((u64 >> 32) & 255); \
+	p((u64 >> 40) & 255); \
+	p((u64 >> 48) & 255); \
+	p((u64 >> 56) & 255);
+
 
 void (*program_compile(struct program *p))(void *mem)
 {
@@ -27,6 +40,9 @@ void (*program_compile(struct program *p))(void *mem)
 			     -1, 0);
 
 	size_t i = 0;
+
+	size_t bracket_stack[BF_MAX_BRACKET];
+	size_t bracket_stack_len = 0;
 
 	pm("\x49\x89\xfa");  /* mov %rdi,%r10 */
 
@@ -101,10 +117,66 @@ void (*program_compile(struct program *p))(void *mem)
 			pm("\x0f\x05");
 
 			break;
-		}
+
+		case OP_SZ:
+			/*
+			 * 48 b8 xx xx xx xx xx    movabs ...,%rax
+			 * xx xx xx
+			 * 49 83 3a 00             cmpq   $0x0,(%r10)
+			 * 75 02                   jne    12 <skip>
+			 * ff e0                   jmp    *%rax
+			 */
+
+			bracket_stack[bracket_stack_len++] = i;
+
+			pm("\x48\xb8");
+			p_u64(0LL);
+
+			pn("\x49\x83\x3a\x00", 4);
+
+			pm("\x75\x02");
+
+			pm("\xff\xe0");
+
+			break;
+
+		case OP_SNZ: {
+			/*
+			 * 48 b8 xx xx xx xx xx    movabs ...,%rax
+			 * xx xx xx
+			 * 49 83 3a 00             cmpq   $0x0,(%r10)
+			 * 74 02                   je     12 <skip>
+			 * ff e0                   jmp    *%rax
+			 */
+
+			size_t pair = bracket_stack[--bracket_stack_len];
+			char *pair_addr = &program[pair];
+			char *this_addr = &program[i];
+
+			pm("\x48\xb8");
+			p_u64(((size_t) pair_addr));
+
+			pn("\x49\x83\x3a\x00", 4);
+
+			pm("\x74\x02");
+
+			pm("\xff\xe0");
+
+			size_t hold_i = i;
+
+			i = pair + 2;
+			p_u64(((size_t) this_addr));
+			i = hold_i;
+
+			break;
+		}}
 	}
 
 	p('\xc3');  /* ret */
 
-	return *(void (**)(void *)) &program;
+	void (*program_)(void *);
+
+	memcpy(&program_, &program, sizeof(void *));
+
+	return program_;
 }
