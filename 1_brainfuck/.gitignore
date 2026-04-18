@@ -1,0 +1,9 @@
+.cache/
+*.o
+*.d
+*.gcda
+*.gcno
+compile_commands.json
+rdesc
+bj-jit
+tests
