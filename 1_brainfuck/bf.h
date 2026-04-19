@@ -24,7 +24,6 @@ enum op_kind {
 
 union op_data {
 	uint32_t count;
-	size_t bracket_pair;
 };
 
 struct op {

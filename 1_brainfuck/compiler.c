@@ -2,8 +2,8 @@
 
 #include <assert.h>
 #include <stddef.h>
-
 #include <string.h>
+
 #include <sys/mman.h>
 
 
@@ -51,14 +51,14 @@ void (*program_compile(struct program *p))(void *mem)
 
 		switch (op.kind) {
 		case OP_INC:
-			pm("\x49\x81\x02");  /* add ...,(%r10)*/
-			p_u32(op.data.count);
+			pm("\x41\x80\x02");  /* addb ...,(%r10)*/
+			p(op.data.count & 255);
 
 			break;
 
 		case OP_DEC:
-			pm("\x49\x81\x2a");  /* sub ...,(%r10)*/
-			p_u32(op.data.count);
+			pm("\x41\x80\x2a");  /* subb ...,(%r10)*/
+			p(op.data.count & 255);
 
 			break;
 
@@ -122,8 +122,8 @@ void (*program_compile(struct program *p))(void *mem)
 			/*
 			 * 48 b8 xx xx xx xx xx    movabs ...,%rax
 			 * xx xx xx
-			 * 49 83 3a 00             cmpq   $0x0,(%r10)
-			 * 75 02                   jne    12 <skip>
+			 * 41 80 3a 00             cmpb   $0x0,(%r10)
+			 * 75 02                   jne    <skip>
 			 * ff e0                   jmp    *%rax
 			 */
 
@@ -132,7 +132,7 @@ void (*program_compile(struct program *p))(void *mem)
 			pm("\x48\xb8");
 			p_u64(0LL);
 
-			pn("\x49\x83\x3a\x00", 4);
+			pn("\x41\x80\x3a\x00", 4);
 
 			pm("\x75\x02");
 
@@ -144,8 +144,8 @@ void (*program_compile(struct program *p))(void *mem)
 			/*
 			 * 48 b8 xx xx xx xx xx    movabs ...,%rax
 			 * xx xx xx
-			 * 49 83 3a 00             cmpq   $0x0,(%r10)
-			 * 74 02                   je     12 <skip>
+			 * 41 80 3a 00             cmpb   $0x0,(%r10)
+			 * 74 02                   je     <skip>
 			 * ff e0                   jmp    *%rax
 			 */
 
@@ -156,7 +156,7 @@ void (*program_compile(struct program *p))(void *mem)
 			pm("\x48\xb8");
 			p_u64(((size_t) pair_addr));
 
-			pn("\x49\x83\x3a\x00", 4);
+			pn("\x41\x80\x3a\x00", 4);
 
 			pm("\x74\x02");
 

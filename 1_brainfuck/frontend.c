@@ -11,9 +11,6 @@ void program_parse(struct program *p, const char *text) {
 	uint32_t count = 0;
 	char c;
 
-	size_t bracket_stack[BF_MAX_BRACKET];
-	size_t bracket_stack_len = 0;
-
 	char prev_char = '\0';
 	while (true) {
 		c = text[i++];
@@ -57,21 +54,16 @@ void program_parse(struct program *p, const char *text) {
 				break;
 
 			case '[':
-				bracket_stack[bracket_stack_len++] = p->len;
-
-				program_push_op(p,
-					(struct op) { .kind = OP_SZ });
+				while (count--)
+					program_push_op(p,
+						(struct op) { .kind = OP_SZ });
 
 				break;
 
 			case ']': {
-				size_t pair = bracket_stack[--bracket_stack_len];
-
-				p->program[pair].data.bracket_pair = p->len;
-
-				program_push_op(p,
-					(struct op) { .kind = OP_SNZ,
-						      .data.bracket_pair = pair });
+				while (count--)
+					program_push_op(p,
+						(struct op) { .kind = OP_SNZ });
 
 				break;
 
